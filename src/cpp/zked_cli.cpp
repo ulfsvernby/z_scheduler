@@ -141,9 +141,12 @@ static void handle_run_cmd()
 		cnt++;
 		cout << "Starting Job " << j.getOrderNumber() << "  " << j.getFuncName()
 				<< endl;
-		string cmd = "dcl -c \"";
+		string cmd = "";
+		if (j.getIsDCL())
+			 cmd = "dcl -c \"";
 		cmd += j.getCommand();
-		cmd += "\"";
+		if (j.getIsDCL())
+			cmd += "\"";
 		int sts = system(cmd.c_str());
 		cout << "    " << sts << " returned from command " << j.getCommand()
 				<< endl;
