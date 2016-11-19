@@ -53,7 +53,7 @@ GE_CLI_VAL_END_OF_LIST_ITEM, };
 
 static GE_CLI_VAL show_job_key_def[] =
 {
-{ "ORDER_NUMBER", GE_CLI_INT, JOPT_ORDER_NUMBER, 0, 10000000,0, 0 },
+{ "ORDER_NUMBER", GE_CLI_INT, JOPT_ORDER_NUMBER, 0, 10000000, 0, 0 },
 GE_CLI_VAL_END_OF_LIST_ITEM, };
 
 /*
@@ -263,12 +263,15 @@ static void handle_cli_report(GE_CLI_REPORT *cmd_report, ostringstream& result,
 		case JOB_OBJ:
 		{
 			char *p1 = cmd_report->value_str_array[0];
-			int opt_enum = cmd_report->no_of_options ? cmd_report->option_def_array[0]->enum_id : NO_OPT;
+			int opt_enum =
+					cmd_report->no_of_options ?
+							cmd_report->option_def_array[0]->enum_id : NO_OPT;
 			if (opt_enum == JOPT_SHOW_ALL)
 			{
 				if (p1 != nullptr && strlen(p1) >= 0)
 				{
-					result << "%ZKED-E-INVCOMB, parameter job number must be empty"
+					result
+							<< "%ZKED-E-INVCOMB, parameter job number must be empty"
 							<< "when OPTION /ALL is set";
 				}
 				else
@@ -285,13 +288,19 @@ static void handle_cli_report(GE_CLI_REPORT *cmd_report, ostringstream& result,
 				}
 				break;
 			}
-
-			bool is_ok = cur_job_list.get(j, atol(p1));
-			if (is_ok)
-				result << j.to_string(false);
-			else
+			if (p1 == nullptr)
+			{
+				result << "%ZKED-E-JOBNOMISS, job number missing";
+			}
+			else if (!cur_job_list.get(j, atol(p1)))
+			{
 				result << "%ZKED-E-JNF, job \""
 						<< cmd_report->value_str_array[0] << "\" not found";
+			}
+			else
+			{
+				result << j.to_string(false);
+			}
 			break;
 
 		}
