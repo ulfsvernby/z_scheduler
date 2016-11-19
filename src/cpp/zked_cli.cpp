@@ -42,14 +42,23 @@ typedef enum joptenum
 	JOPT_LAST_DONE,
 	JOPT_IS_DCL,
 	JOPT_GROUP_ACCOUNT,
+	JOPT_SHOW_ALL,
 } JOPT_ENUM;
 
 static GE_CLI_VAL job_key_def[] =
 {
 { "ORDER_NUMBER", GE_CLI_INT, JOPT_ORDER_NUMBER, 0, 10000000,
 GE_CLI_IS_REQ_VAL, 0 },
-{ 0, GE_CLI_UNDEFINED_VAL_TYP, 0, 0, 0, 0, 0 }, };
+GE_CLI_VAL_END_OF_LIST_ITEM, };
 
+static GE_CLI_VAL show_job_key_def[] =
+{
+{ "ORDER_NUMBER", GE_CLI_INT, JOPT_ORDER_NUMBER, 0, 10000000,0, 0 },
+GE_CLI_VAL_END_OF_LIST_ITEM, };
+
+/*
+ * Option definitions
+ */
 static GE_CLI_VAL job_opt_def[] =
 {
 { "FUNC_NAME", GE_CLI_STRING0, JOPT_FUNC_NAME, 1, 30,
@@ -62,13 +71,22 @@ GE_CLI_IS_RECORD_INFO, 0 },
 GE_CLI_IS_RECORD_INFO, 0 },
 { "IS_DCL", GE_CLI_STRING0, JOPT_IS_DCL, 0, 10,
 GE_CLI_IS_RECORD_INFO, 0 },
-{ 0, GE_CLI_UNDEFINED_VAL_TYP, 0, 0, 0, 0, 0 }, };
+GE_CLI_VAL_END_OF_LIST_ITEM, };
 
+static GE_CLI_VAL show_job_opt_def[] =
+{
+{ "ALL", GE_CLI_UNDEFINED_VAL_TYP, JOPT_SHOW_ALL, 0, 0, GE_CLI_NO_VALUE, 0 },
+GE_CLI_VAL_END_OF_LIST_ITEM, };
+
+/*
+ * Define command verbs
+ */
 static GE_CLI_SYNTAX show_job_syntax =
 { "SET", SET_CMD, "JOB", JOB_OBJ, job_key_def, job_opt_def, nullptr, cli_cb };
 
 static GE_CLI_SYNTAX set_job_syntax =
-{ "SHOW", SHOW_CMD, "JOB", JOB_OBJ, job_key_def, job_opt_def, nullptr, cli_cb };
+{ "SHOW", SHOW_CMD, "JOB", JOB_OBJ, show_job_key_def, show_job_opt_def, nullptr,
+		cli_cb };
 
 static GE_CLI_SYNTAX add_job_syntax =
 { "ADD", ADD_CMD, "JOB", JOB_OBJ, job_key_def, job_opt_def, nullptr, cli_cb };
@@ -143,7 +161,7 @@ static void handle_run_cmd()
 				<< endl;
 		string cmd = "";
 		if (j.getIsDCL())
-			 cmd = "dcl -c \"";
+			cmd = "dcl -c \"";
 		cmd += j.getCommand();
 		if (j.getIsDCL())
 			cmd += "\"";
@@ -244,14 +262,38 @@ static void handle_cli_report(GE_CLI_REPORT *cmd_report, ostringstream& result,
 		{
 		case JOB_OBJ:
 		{
-			bool is_ok = cur_job_list.get(j,
-					atol(cmd_report->value_str_array[0]));
+			char *p1 = cmd_report->value_str_array[0];
+			int opt_enum = cmd_report->no_of_options ? cmd_report->option_def_array[0]->enum_id : NO_OPT;
+			if (opt_enum == JOPT_SHOW_ALL)
+			{
+				if (p1 != nullptr && strlen(p1) >= 0)
+				{
+					result << "%ZKED-E-INVCOMB, parameter job number must be empty"
+							<< "when OPTION /ALL is set";
+				}
+				else
+				{
+					int order_number = 0, cnt = 0;
+					bool is_found = cur_job_list.getNext(j, 0);
+					while (is_found)
+					{
+						cnt++;
+						result << j.to_string(false) << endl << endl;
+						is_found = cur_job_list.getNext(j, j.getOrderNumber());
+					}
+					result << cnt << " ROWS SELECTED";
+				}
+				break;
+			}
+
+			bool is_ok = cur_job_list.get(j, atol(p1));
 			if (is_ok)
 				result << j.to_string(false);
 			else
 				result << "%ZKED-E-JNF, job \""
 						<< cmd_report->value_str_array[0] << "\" not found";
 			break;
+
 		}
 		default:
 			printf("%s: program error, %d undefined obj_id_enum\n", __func__,
