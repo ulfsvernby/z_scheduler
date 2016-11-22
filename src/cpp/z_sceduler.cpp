@@ -4,31 +4,32 @@
  *  Created on: Jun 28, 2016
  *      Author: s22708
  */
-#include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#include <list>
-#include "Job.h"
 
-char* zked_cli_parse(string& cmd_str);
+#include <readline/history.h>
+#include <readline/readline.h>
+#include <iostream>
+using namespace std;
+char* zked_cli_parse(char *cmd_str);
 int main(int argc, char **argv)
 {
-	bool dont_stop = true;
-	while (dont_stop)
+	using_history();
+	char *prompt = "ZSCHED> ";
+
+	for (;;)
 	{
-		cout << "ZSCHED> ";
-		char buf[1024];
-		int len = sizeof(buf) - 1;
-		cin.getline(buf, len);
-		string cmd = buf;
-		char* r =  zked_cli_parse(cmd);
-		if( r != nullptr)
+		char *cmd = readline(prompt);
+		if (cmd)
 		{
-			cout << r << endl;
+			char* r = zked_cli_parse(cmd);
+			if (r != nullptr)
+			{
+				cout << r << endl;
+			}
+			add_history(cmd);
+			free(cmd);
 		}
+		else
+			cout << "cmd is empty" << endl;
 	}
 }
 

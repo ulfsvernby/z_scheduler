@@ -353,9 +353,9 @@ static char* cli_cb(GE_CLI_REPORT *cmd_report)
 	return tmp;
 }
 
-char* zked_cli_parse(string& cmd_str)
+char* zked_cli_parse(char *cmd_str)
 {
 	if (!is_init)
 		cli_init();
-	return ge_cli_parse_str((char*) cmd_str.c_str());
+	return ge_cli_parse_str( cmd_str );
 }
